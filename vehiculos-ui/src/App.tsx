@@ -3,11 +3,14 @@ import { AppBar, Toolbar, Typography, Button, Stack } from "@mui/material";
 
 import HomePage from "./pages/HomePage";
 import AboutPage from "./pages/AboutPage";
+// CAMBIO: PublicVehiclesPage → PublicShowsPage (mostrar funciones públicamente)
 import PublicVehiclesPage from "./pages/PublicVehiclesPage";
 import LoginPage from "./pages/LoginPage";
 
 import AdminHomePage from "./pages/AdminHomePage";
+// CAMBIO: AdminMarcasPage → AdminShowsPage (gestión de funciones)
 import AdminMarcasPage from "./pages/AdminMarcasPage";
+// CAMBIO: AdminVehiculosPage → AdminReservationsPage (gestión de reservas)
 import AdminVehiculosPage from "./pages/AdminVehiculosPage";
 
 import RequireAuth from "./components/RequireAuth";
@@ -17,14 +20,16 @@ export default function App() {
     <BrowserRouter>
       <AppBar position="static">
         <Toolbar>
+          {/* CAMBIO: Cambiar título de "Vehículos UI" a "Cine UI" */}
           <Typography variant="h6" sx={{ flexGrow: 1 }}>
-            Vehículos UI (MUI)
+            Cine UI (MUI)
           </Typography>
 
           <Stack direction="row" spacing={1} sx={{ flexWrap: "wrap" }}>
             <Button color="inherit" component={Link} to="/">Home</Button>
             <Button color="inherit" component={Link} to="/acerca">Acerca</Button>
-            <Button color="inherit" component={Link} to="/lista">Lista</Button>
+            {/* CAMBIO: "/lista" ahora muestra funciones/películas */}
+            <Button color="inherit" component={Link} to="/lista">Funciones</Button>
             <Button color="inherit" component={Link} to="/login">Login</Button>
             <Button color="inherit" component={Link} to="/admin">Admin</Button>
           </Stack>
@@ -34,6 +39,7 @@ export default function App() {
       <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/acerca" element={<AboutPage />} />
+        {/* CAMBIO: "/lista" ahora es lista de funciones (shows) */}
         <Route path="/lista" element={<PublicVehiclesPage />} />
         <Route path="/login" element={<LoginPage />} />
 
@@ -46,6 +52,7 @@ export default function App() {
           }
         />
 
+        {/* CAMBIO: "/admin/marcas" → "/admin/shows" (gestión de funciones de cine) */}
         <Route
           path="/admin/marcas"
           element={
@@ -55,6 +62,7 @@ export default function App() {
           }
         />
 
+        {/* CAMBIO: "/admin/vehiculos" → "/admin/reservations" (gestión de reservas) */}
         <Route
           path="/admin/vehiculos"
           element={

@@ -1,0 +1,241 @@
+================================================================================
+ADAPTACIÓN DE PROYECTO: VEHÍCULOS → CINE
+================================================================================
+
+CAMBIOS REALIZADOS AUTOMÁTICAMENTE (CON COMENTARIOS EN CADA LÍNEA):
+
+✅ BACKEND DJANGO (vehiculos_api/):
+  1. models.py: Marca/Vehiculo → Show/Reservation
+  2. .env: DB_NAME/DB_USER actualizados a cinema_db/backend_user
+  3. settings.py: Configuración de MongoDB (MONGO_USER, MONGO_PASSWORD)
+  4. serializers.py: ShowSerializer, ReservationSerializer
+  5. views.py: ShowViewSet, ReservationViewSet con integración Mongo
+  6. mongo.py: Función get_mongo_collection()
+  7. mongo_serializers.py: MovieCatalogSerializer, ReservationEventSerializer
+  8. service_types_views.py: Actualizado para movie_catalog
+  9. vehicle_services_views.py: Actualizado para reservation_events
+  10. urls.py: Rutas /shows, /reservations
+  11. admin.py: Registro de Show y Reservation en Django Admin
+
+✅ FRONTEND REACT (vehiculos-ui/):
+  1. shows.api.ts: Creado para funciones de cine
+  2. vehiculos.api.ts: Renombrado a reservations (tipo Reservation)
+  3. App.tsx: Título "Cine UI", rutas actualizadas
+  4. AdminMarcasPage.tsx: Convertido a gestión de Shows
+  5. AdminVehiculosPage.tsx: Convertido a gestión de Reservations
+
+✅ REACT NATIVE (vehiculos-rn/):
+  1. serviceTypes.api.ts: Actualizado para movie_catalog
+  2. vehicleServices.api.ts: Actualizado para reservation_events
+  3. vehiculos.api.ts: Ahora consume /api/shows/
+
+================================================================================
+PASOS PENDIENTES (MANUAL):
+================================================================================
+
+1. DJANGO - CREAR MIGRACIONES Y APLICARLAS:
+   cd "C:\Users\Master Race\proyectos\Proyecto-comp\vehiculos_api"
+   python manage.py makemigrations
+   python manage.py migrate
+
+2. POSTGRESQL - CREAR BASE DE DATOS Y USUARIO:
+   # Conectar a PostgreSQL como superuser (psql -U postgres)
+   CREATE DATABASE cinema_db;
+   CREATE USER backend_user WITH PASSWORD 'admin123';
+   ALTER ROLE backend_user SET client_encoding TO 'utf8';
+   ALTER ROLE backend_user SET default_transaction_isolation TO 'read committed';
+   ALTER ROLE backend_user SET default_transaction_deferrable TO on;
+   ALTER ROLE backend_user SET default_transaction_deferrable TO on;
+   GRANT ALL PRIVILEGES ON DATABASE cinema_db TO backend_user;
+   \c cinema_db
+   GRANT ALL ON SCHEMA public TO backend_user;
+
+3. MONGODB - CREAR BASE DE DATOS Y USUARIO:
+   # Abrir mongosh
+   use cinema_logs
+   db.createUser({
+     user: "mongo_backend_user",
+     pwd: "exa_2026_ute",
+     roles: [{ role: "readWrite", db: "cinema_logs" }]
+   })
+
+4. MONGODB - CREAR ÍNDICES:
+   db.reservation_events.createIndex({ reservation_id: 1 })
+   db.reservation_events.createIndex({ created_at: 1 })
+   db.movie_catalog.createIndex({ movie_title: 1 })
+
+5. DJANGO - CREAR SUPERUSER (ADMIN):
+   python manage.py createsuperuser
+
+6. DJANGO - CARGAR DATOS DE EJEMPLO (opcional):
+   # Usar Django Admin en http://localhost:8000/admin
+   # O crear un script de fixtures
+
+7. REACT - INSTALAR DEPENDENCIES Y EJECUTAR:
+   cd "C:\Users\Master Race\proyectos\Proyecto-comp\vehiculos-ui"
+   npm install  (si no está hecho)
+   npm run dev
+
+8. REACT NATIVE - ACTUALIZAR TIPOS:
+   # Revisar y actualizar types/vehiculo.ts para reflejar estructura de Show:
+   # {
+   #   id: number;
+   #   movie_title: string;
+   #   room: string;
+   #   price: number;
+   #   available_seats: number;
+   #   created_at?: string;
+   # }
+
+9. REACT NATIVE - EJECUTAR:
+   cd "C:\Users\Master Race\proyectos\Proyecto-comp\vehiculos-rn"
+   npm install  (si no está hecho)
+   npx expo start
+
+10. GIT - COMMIT Y PUSH:
+    git add .
+    git commit -m "Adaptar proyecto de vehículos a cine"
+    git push origin main
+
+================================================================================
+ESTRUCTURA DE DATOS - POSTGRESQL (2 tablas):
+================================================================================
+
+Tabla: catalog_show
+┌─────────────────────────────────────┐
+│ id (BIGSERIAL PRIMARY KEY)          │
+│ movie_title (VARCHAR 120) NOT NULL  │
+│ room (VARCHAR 20) NOT NULL          │
+│ price (DECIMAL 10,2) NOT NULL       │
+│ available_seats (INTEGER) NOT NULL  │
+│ created_at (TIMESTAMP)              │
+└─────────────────────────────────────┘
+
+Tabla: catalog_reservation
+┌─────────────────────────────────────┐
+│ id (BIGSERIAL PRIMARY KEY)          │
+│ show_id (BIGINT) REFERENCES show    │
+│ customer_name (VARCHAR 120)         │
+│ seats (INTEGER) NOT NULL            │
+│ status (VARCHAR 20) NOT NULL        │
+│   → RESERVED / CONFIRMED / CANCELLED│
+│ created_at (TIMESTAMP)              │
+└─────────────────────────────────────┘
+
+================================================================================
+ESTRUCTURA DE DATOS - MONGODB (2 colecciones):
+================================================================================
+
+Colección: movie_catalog
+┌────────────────────────────────────┐
+│ {                                  │
+│   _id: ObjectId                    │
+│   movie_title: string              │
+│   genre: string                    │
+│   duration_min: int                │
+│   rating: string (PG-13, R, etc)  │
+│   is_active: boolean               │
+│ }                                  │
+└────────────────────────────────────┘
+
+Colección: reservation_events
+┌────────────────────────────────────┐
+│ {                                  │
+│   _id: ObjectId                    │
+│   reservation_id: long (ID SQL)    │
+│   event_type: string               │
+│     → CREATED / CONFIRMED /        │
+│        CANCELLED / CHECKED_IN      │
+│   source: string (WEB/MOBILE/SYS) │
+│   note: string                     │
+│   created_at: date                 │
+│ }                                  │
+└────────────────────────────────────┘
+
+================================================================================
+ENDPOINTS DISPONIBLES:
+================================================================================
+
+FUNCIONES (Shows) - PostgreSQL:
+  GET    /api/shows/                    - Listar (público)
+  POST   /api/shows/                    - Crear (admin)
+  GET    /api/shows/{id}/               - Detalle (público)
+  PUT    /api/shows/{id}/               - Actualizar (admin)
+  DELETE /api/shows/{id}/               - Eliminar (admin)
+
+RESERVAS - PostgreSQL:
+  GET    /api/reservations/             - Listar (público)
+  POST   /api/reservations/             - Crear + evento Mongo (público)
+  GET    /api/reservations/{id}/        - Detalle (público)
+  PUT    /api/reservations/{id}/        - Actualizar (admin)
+  DELETE /api/reservations/{id}/        - Eliminar (admin)
+
+CATÁLOGO (Movies) - MongoDB:
+  GET    /api/service-types/            - Listar cartelera (público)
+  POST   /api/service-types/            - Crear película (admin)
+  GET    /api/service-types/{id}/       - Detalle película (público)
+  PUT    /api/service-types/{id}/       - Actualizar película (admin)
+  DELETE /api/service-types/{id}/       - Eliminar película (admin)
+
+EVENTOS - MongoDB:
+  GET    /api/vehicle-services/         - Listar eventos (público)
+  POST   /api/vehicle-services/         - Crear evento (admin)
+  GET    /api/vehicle-services/{id}/    - Detalle evento (público)
+  PUT    /api/vehicle-services/{id}/    - Actualizar evento (admin)
+  DELETE /api/vehicle-services/{id}/    - Eliminar evento (admin)
+
+================================================================================
+INTEGRACION CLAVE: Crear Reservación
+================================================================================
+
+Flujo completo:
+1. Frontend React: POST /api/reservations/
+   {
+     "show": 1,
+     "customer_name": "Juan Pérez",
+     "seats": 3,
+     "status": "RESERVED"
+   }
+
+2. Backend Django recibe la solicitud
+   a) Crea registro en tabla PostgreSQL: reservations
+   b) Obtiene el ID de la reserva creada (ej: 42)
+   c) Crea documento en MongoDB: reservation_events
+      {
+        "reservation_id": 42,
+        "event_type": "CREATED",
+        "source": "WEB",
+        "note": "Reserva creada para Juan Pérez",
+        "created_at": <fecha actual>
+      }
+
+3. React Native accede a:
+   GET /api/vehicle-services/ (reservation_events de Mongo)
+   Para ver historial de eventos usando "reservation_id"
+
+================================================================================
+COMENTARIOS EN EL CÓDIGO:
+================================================================================
+
+Todos los cambios tienen comentarios con formato:
+  // CAMBIO: Descripción de qué cambió y por qué
+
+Ejemplos:
+  ✓ models.py: "CAMBIO: Show reemplaza la tabla de Marca + Vehiculo"
+  ✓ views.py: "CAMBIO: Al crear reserva, también crear evento en MongoDB"
+  ✓ serializers.py: "CAMBIO: Fields ahora incluyen movie_title, room, price"
+
+Estos comentarios facilitan adaptar el código a otros proyectos similares.
+
+================================================================================
+PRÓXIMOS PASOS DESPUÉS DE ESTO:
+================================================================================
+
+1. Completar tipos en React Native (vehiculos-rn/src/types/)
+2. Actualizar componentes de React Native para mostrar películas y eventos
+3. Crear vistas de "Crear Reservación" en React Native (consume /api/reservations/)
+4. Agregar autenticación JWT en React Native si es necesario
+5. Crear fixtures de datos de prueba (movies, shows, reservations)
+6. Pruebas end-to-end: Web → API → MongoDB
+
+================================================================================

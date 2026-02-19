@@ -1,0 +1,283 @@
+================================================================================
+CHECKLIST DE VERIFICACIÓN POST-ADAPTACIÓN
+================================================================================
+
+Verifica que todos los cambios se hayan aplicado correctamente:
+
+🔍 BACKEND DJANGO (vehiculos_api/):
+═════════════════════════════════════════════════════════════════════════════
+
+catalog/models.py:
+  ☐ Show model con campos: movie_title, room, price, available_seats, created_at
+  ☐ Reservation model con campos: show (FK), customer_name, seats, status, created_at
+  ☐ Status choices: RESERVED, CONFIRMED, CANCELLED
+  ☐ Sin modelos de Marca o Vehiculo
+
+catalog/serializers.py:
+  ☐ ShowSerializer con fields correctos
+  ☐ ReservationSerializer con fields correctos
+  ☐ Sin MarcaSerializer ni VehiculoSerializer
+
+catalog/views.py:
+  ☐ ShowViewSet con permisos AllowAny para GET
+  ☐ ReservationViewSet con método create() que registra evento en MongoDB
+  ☐ Sin MarcaViewSet ni VehiculoViewSet
+
+catalog/urls.py:
+  ☐ router.register("shows", ShowViewSet)
+  ☐ router.register("reservations", ReservationViewSet)
+  ☐ Sin registro de "marcas" ni "vehiculos"
+
+catalog/admin.py:
+  ☐ @admin.register(Show)
+  ☐ @admin.register(Reservation)
+  ☐ Sin registro de Marca ni Vehiculo
+
+catalog/mongo.py:
+  ☐ Función get_mongo_collection(collection_name) definida
+
+catalog/mongo_serializers.py:
+  ☐ MovieCatalogSerializer
+  ☐ ReservationEventSerializer
+  ☐ Sin ServiceTypeSerializer ni VehicleServiceSerializer
+
+catalog/*.py (service_types_views.py, vehicle_services_views.py):
+  ☐ Endpoints públicos para GET (AllowAny)
+  ☐ Endpoints privados para POST/PUT/PATCH/DELETE (IsAuthenticated)
+
+config/settings.py:
+  ☐ DATABASES configurado con PostgreSQL (o SQLite)
+  ☐ MONGO_URI, MONGO_DB, MONGO_USER, MONGO_PASSWORD configurados
+
+.env:
+  ☐ DB_NAME=cinema_db
+  ☐ DB_USER=backend_user
+  ☐ MONGO_DB=cinema_logs
+  ☐ MONGO_USER=mongo_backend_user
+  ☐ MONGO_PASSWORD=exa_2026_ute
+
+requirements.txt / pyproject.toml:
+  ☐ djangorestframework
+  ☐ psycopg2-binary (si usa PostgreSQL)
+  ☐ pymongo
+  ☐ python-dotenv
+
+Migraciones:
+  ☐ manage.py makemigrations ejecutado
+  ☐ manage.py migrate ejecutado
+  ☐ Tablas creadas en PostgreSQL: cinema_db
+
+🔍 FRONTEND REACT (vehiculos-ui/):
+═════════════════════════════════════════════════════════════════════════════
+
+src/api/:
+  ☐ shows.api.ts creado
+  ☐ vehiculos.api.ts actualizado con Reservation type
+  ☐ Sin marcas.api.ts
+
+src/api/shows.api.ts:
+  ☐ type Show con campos: id, movie_title, room, price, available_seats, created_at
+  ☐ Funciones: listShowsPublicApi, listShowsAdminApi, createShowApi, etc.
+
+src/api/vehiculos.api.ts:
+  ☐ type Reservation con campos: id, show, show_movie_title, show_room, customer_name, seats, status, created_at
+  ☐ Funciones: listReservationsPublicApi, createReservationApi, etc.
+
+src/App.tsx:
+  ☐ Título: "Cine UI (MUI)"
+  ☐ Botón /lista → "Funciones"
+  ☐ Rutas mantienen estructura original pero apuntan a nuevas páginas
+
+src/pages/AdminMarcasPage.tsx:
+  ☐ Título: "Admin Funciones de Cine (Privado)"
+  ☐ Importa: Show type, showApis
+  ☐ Campos forma: movieTitle, room, price, availableSeats
+  ☐ Tabla display: ID, Película, Sala, Precio, Asientos
+
+src/pages/AdminVehiculosPage.tsx:
+  ☐ Título: "Admin Reservas de Cine (Privado)"
+  ☐ Importa: Show (para dropdown), Reservation types, reservationApis
+  ☐ Campos forma: show (dropdown), customerName, seats, status
+  ☐ Tabla display: ID, Función, Cliente, Asientos, Estado
+
+Estilos:
+  ☐ Status con colores: CONFIRMED (verde), CANCELLED (rojo), RESERVED (azul)
+
+🔍 REACT NATIVE (vehiculos-rn/):
+═════════════════════════════════════════════════════════════════════════════
+
+src/api/:
+  ☐ vehiculos.api.ts → consume GET /api/shows/
+  ☐ serviceTypes.api.ts → actualizado comentarios
+  ☐ vehicleServices.api.ts → actualizado comentarios
+
+src/types/:
+  ☐ vehiculo.ts → type Vehiculo debería reflejar Show estructura
+     (revisar: movie_title, room, price, available_seats)
+
+src/screens/:
+  ☐ Pantallas aún pueden usar tipos antiguos, pero API retorna Shows
+  ☐ (Ajustes visuales pendientes por usuario)
+
+🔍 POSTGRESQL (VERIFICACIÓN):
+═════════════════════════════════════════════════════════════════════════════
+
+Conexión:
+  ☐ psql -U backend_user -d cinema_db (sin errores)
+
+Tablas:
+  ☐ \dt muestra: public.catalog_show, public.catalog_reservation
+  ☐ No hay tablas "marca" o "vehiculo"
+
+Schema Tabla Show:
+  ☐ id (bigserial)
+  ☐ movie_title (varchar 120)
+  ☐ room (varchar 20)
+  ☐ price (numeric 10,2)
+  ☐ available_seats (integer)
+  ☐ created_at (timestamp)
+
+Schema Tabla Reservation:
+  ☐ id (bigserial)
+  ☐ show_id (bigint, FK)
+  ☐ customer_name (varchar 120)
+  ☐ seats (integer)
+  ☐ status (varchar 20)
+  ☐ created_at (timestamp)
+
+Índices (opcionales pero recomendados):
+  ☐ CREATE INDEX idx_reservations_status ON catalog_reservation(status);
+  ☐ CREATE INDEX idx_reservations_show ON catalog_reservation(show_id);
+
+🔍 MONGODB (VERIFICACIÓN):
+═════════════════════════════════════════════════════════════════════════════
+
+Conexión:
+  ☐ mongosh (sin errores)
+  ☐ use cinema_logs (conecta correctamente)
+
+Autenticación:
+  ☐ db.auth("mongo_backend_user", "exa_2026_ute") retorna 1
+
+Colecciones:
+  ☐ show collections (listado)
+  ☐ Existen o se crearán al insertar: movie_catalog, reservation_events
+
+Índices:
+  ☐ db.reservation_events.createIndex({ reservation_id: 1 })
+  ☐ db.reservation_events.createIndex({ created_at: 1 })
+  ☐ db.movie_catalog.createIndex({ movie_title: 1 })
+
+🔍 ENDPOINTS (TEST):
+═════════════════════════════════════════════════════════════════════════════
+
+Ejecuta desde terminal o Postman:
+
+GET /api/shows/:
+  curl http://localhost:8000/api/shows/
+  ☐ Status 200 (lista vacía si no hay datos)
+
+POST /api/shows/ (requiere token admin):
+  curl -X POST http://localhost:8000/api/shows/ \
+    -H "Authorization: Bearer <token>" \
+    -H "Content-Type: application/json" \
+    -d '{
+      "movie_title": "Inception",
+      "room": "A1",
+      "price": "12.50",
+      "available_seats": 50
+    }'
+  ☐ Status 201 (creado)
+
+POST /api/reservations/:
+  curl -X POST http://localhost:8000/api/reservations/ \
+    -H "Content-Type: application/json" \
+    -d '{
+      "show": 1,
+      "customer_name": "Juan Pérez",
+      "seats": 3,
+      "status": "RESERVED"
+    }'
+  ☐ Status 201 (creado)
+  ☐ Se crea automáticamente evento en MongoDB
+
+GET /api/vehicle-services/ (eventos MongoDB):
+  curl http://localhost:8000/api/vehicle-services/
+  ☐ Status 200 (lista de eventos)
+  ☐ Cada evento tiene: reservation_id, event_type, source, note, created_at
+
+GET /api/service-types/ (película catálogo):
+  curl http://localhost:8000/api/service-types/
+  ☐ Status 200 (lista de películas)
+
+🔍 GIT STATUS:
+═════════════════════════════════════════════════════════════════════════════
+
+Archivos modificados:
+  ☐ vehiculos_api/catalog/models.py
+  ☐ vehiculos_api/catalog/serializers.py
+  ☐ vehiculos_api/catalog/views.py
+  ☐ vehiculos_api/catalog/urls.py
+  ☐ vehiculos_api/catalog/admin.py
+  ☐ vehiculos_api/catalog/mongo.py
+  ☐ vehiculos_api/catalog/mongo_serializers.py
+  ☐ vehiculos_api/catalog/service_types_views.py
+  ☐ vehiculos_api/catalog/vehicle_services_views.py
+  ☐ vehiculos_api/config/settings.py
+  ☐ vehiculos_api/.env
+
+Archivos creados:
+  ☐ vehiculos-ui/src/api/shows.api.ts
+
+Archivos modificados React:
+  ☐ vehiculos-ui/src/App.tsx
+  ☐ vehiculos-ui/src/api/vehiculos.api.ts
+  ☐ vehiculos-ui/src/pages/AdminMarcasPage.tsx
+  ☐ vehiculos-ui/src/pages/AdminVehiculosPage.tsx
+
+Archivos creados documentación:
+  ☐ INSTRUCCIONES_ADAPTACION.txt
+  ☐ RESUMEN_CAMBIOS.txt
+  ☐ CHECKLIST_VERIFICACION.txt (este archivo)
+
+Archivos con migraciones:
+  ☐ vehiculos_api/catalog/migrations/000X_initial.py (creado)
+
+🟢 CHECKLIST FINAL:
+═════════════════════════════════════════════════════════════════════════════
+
+Marca todas las verificaciones como ☑ para confirmar éxito:
+
+Backend:
+  ☑ Modelos Django creados (Show, Reservation)
+  ☑ Serializers actualizados
+  ☑ ViewSets con métodos correctos
+  ☑ URLs registradas
+  ☑ Admin configurable
+  ☑ Migraciones creadas
+  ☑ MongoDB integrado en views.py
+
+Frontend React:
+  ☑ APIs actualizadas (shows.api.ts, vehiculos.api.ts)
+  ☑ Páginas admin actualizadas
+  ☑ Tipos TypeScript correctos
+  ☑ Rutas en App.tsx
+
+React Native:
+  ☑ APIs apuntan a endpoints correctos (/api/shows/, /api/vehicle-services/)
+  ☑ Tipos reflejan estructura de datos
+
+Configuración:
+  ☑ .env con valores correctos (cinema_db, backend_user, etc.)
+  ☑ settings.py apunta a cinema_db y cinema_logs
+  ☑ PostgreSQL y MongoDB conexión verificada
+
+Documentación:
+  ☑ Comentarios "// CAMBIO:" en cada línea modificada
+  ☑ INSTRUCCIONES_ADAPTACION.txt completo
+  ☑ RESUMEN_CAMBIOS.txt con comparativa
+  ☑ CHECKLIST_VERIFICACION.txt (este archivo)
+
+================================================================================
+Si todas las ☑ están marcadas, ¡la adaptación fue exitosa!
+================================================================================

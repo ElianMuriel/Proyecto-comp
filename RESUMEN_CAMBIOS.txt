@@ -1,0 +1,175 @@
+================================================================================
+RESUMEN DE CAMBIOS: VEHÍCULOS → CINE
+================================================================================
+
+ANTES (VEHÍCULOS)          |  DESPUÉS (CINE)
+═══════════════════════════════════════════════════════════════════════════════
+
+📊 BASES DE DATOS:
+─────────────────────────────────────────────────────────────────────────────
+BD PostgreSQL: vehiculos_db → cinema_db
+Usuario: vehiculos_user   → backend_user
+BD MongoDB: vehiculos_db  → cinema_logs
+
+📋 TABLAS POSTGRESQL (Cambios de entidades):
+─────────────────────────────────────────────────────────────────────────────
+Marca                      → (eliminada)
+Vehiculo                   → (eliminada)
+                           → Show (nueva tabla)
+                           → Reservation (nueva tabla)
+
+Campos Marca:              → Campos Show:
+- nombre                   - movie_title (nombre película)
+                           - room (sala)
+                           - price (precio entrada)
+                           - available_seats (asientos)
+                           - created_at
+
+Campos Vehiculo:           → Campos Reservation:
+- marca_id (FK)           - show_id (FK)
+- modelo                  - customer_name (nombre cliente)
+- anio                    - seats (asientos reservados)
+- placa                   - status (RESERVED/CONFIRMED/CANCELLED)
+- color                   - created_at
+
+📚 COLECCIONES MONGODB:
+─────────────────────────────────────────────────────────────────────────────
+service_types              → movie_catalog
+{                          {
+  name: string             movie_title: string
+  description: string      genre: string
+  base_price: float        duration_min: int
+  is_active: bool          rating: string
+}                          is_active: bool
+                           }
+
+vehicle_services           → reservation_events
+{                          {
+  vehiculo_id: int         reservation_id: int (ID SQL)
+  service_type_id: ObjectId event_type: string
+  date: date               source: string
+  kilometers: int          note: string
+  cost: float              created_at: date
+  notes: string            }
+}
+
+🛣️  ENDPOINTS API:
+─────────────────────────────────────────────────────────────────────────────
+/api/marcas/               → /api/shows/
+/api/vehiculos/            → /api/reservations/
+/api/service-types/        → /api/service-types/ (ahora movie_catalog)
+/api/vehicle-services/     → /api/vehicle-services/ (ahora reservation_events)
+
+🐍 BACKEND DJANGO:
+─────────────────────────────────────────────────────────────────────────────
+models.py:
+  - Marca (modelo)         → Show (modelo)
+  - Vehiculo (modelo)      → Reservation (modelo)
+
+serializers.py:
+  - MarcaSerializer        → ShowSerializer
+  - VehiculoSerializer     → ReservationSerializer
+  - (nuevo)                → ReservationSerializer
+
+views.py:
+  - MarcaViewSet           → ShowViewSet
+  - VehiculoViewSet        → ReservationViewSet
+
+urls.py:
+  - router.register(...marcas...)      → router.register(...shows...)
+  - router.register(...vehiculos...)   → router.register(...reservations...)
+
+admin.py:
+  - admin.register(Marca)  → admin.register(Show)
+  - admin.register(Vehiculo) → admin.register(Reservation)
+
+⚛️  FRONTEND REACT:
+─────────────────────────────────────────────────────────────────────────────
+Archivos API (src/api/):
+  - marcas.api.ts          → (eliminado, funcionalidad en shows.api.ts)
+  - vehiculos.api.ts       → se renombra a reservations internamente
+
+Tipos:
+  - type Marca             → type Show
+  - type Vehiculo          → type Reservation
+
+Páginas (src/pages/):
+  - AdminMarcasPage.tsx    → (mantiene nombre pero es AdminShowsPage)
+  - AdminVehiculosPage.tsx → (mantiene nombre pero es AdminReservationsPage)
+
+Funciones:
+  - listMarcasApi()        → listShowsApi()
+  - createMarcaApi()       → createShowApi()
+  - listVehiculosApi()     → listReservationsApi()
+  - createVehiculoApi()    → createReservationApi()
+
+⚙️  REACT NATIVE:
+─────────────────────────────────────────────────────────────────────────────
+Archivos API (src/api/):
+  - vehiculos.api.ts       → Ahora listVehiculosApi() → GET /api/shows/
+  - serviceTypes.api.ts    → Ahora para movie_catalog
+  - vehicleServices.api.ts → Ahora para reservation_events
+
+Pantallas esperadas:
+  - Catálogo de vehículos  → Cartelera de películas (movie_catalog)
+  - Servicios de vehículos → Eventos de reserva (reservation_events)
+
+📦 PARÁMETROS DE CONFIGURACIÓN (.env):
+─────────────────────────────────────────────────────────────────────────────
+Antes:                     Después:
+DB_NAME=vehiculos_db       DB_NAME=cinema_db
+DB_USER=vehiculos_user     DB_USER=backend_user
+MONGO_DB=vehiculos_db      MONGO_DB=cinema_logs
+(no había usuarios)        MONGO_USER=mongo_backend_user
+                           MONGO_PASSWORD=exa_2026_ute
+
+📝 COMPONENTES PRINCIPALES MANTENIDOS:
+─────────────────────────────────────────────────────────────────────────────
+✓ Estructura de carpetas
+✓ Sistema de autenticación JWT
+✓ HTTP client (axios basado)
+✓ Integración PostgreSQL + MongoDB
+✓ DjangoRESTFramework
+✓ Material-UI (React)
+✓ React Native Expo
+
+🔄 FLUJO DE INTEGRACIÓN (Clave):
+─────────────────────────────────────────────────────────────────────────────
+Usuario React → POST /api/reservations/
+                ↓
+            Django Backend
+            ├─ Crea en PostgreSQL (reservations table)
+            └─ Obtiene ID de reserva (ej: 42)
+                ├─ Crea en MongoDB (reservation_events)
+                │  {reservation_id: 42, event_type: "CREATED", ...}
+                └─ Retorna respuesta al frontend
+
+Usuario React Native → GET /api/vehicle-services/
+                       ↓
+                   Django Backend
+                   └─ Retorna eventos de MongoDB
+                      (filtrables por reservation_id)
+
+================================================================================
+NOTAS IMPORTANTES:
+================================================================================
+
+1. Los comentarios "// CAMBIO:" están en TODAS las líneas que cambiaron
+   para facilitar adaptación a otros proyectos similares.
+
+2. Nombres de archivos mantienen estructura original pero contenido cambió:
+   - AdminMarcasPage.tsx (contenido es para Shows)
+   - AdminVehiculosPage.tsx (contenido es para Reservations)
+   - vehiculos.api.ts (contenido es para Reservations)
+
+3. URLs de endpoints mantienen la misma estructura: /api/{recurso}/
+   Solo cambian los recursos: shows, reservations, service-types, vehicle-services
+
+4. MongoDB se usa SOLO para tablas de auditoría/eventos, NO para datos principales
+   - Datos principales: PostgreSQL (Show, Reservation)
+   - Datos operativos: MongoDB (movie_catalog, reservation_events)
+
+5. La integración asegura que TODA reserva crea un evento en Mongo
+   automáticamente al ser creada vía API.
+
+================================================================================

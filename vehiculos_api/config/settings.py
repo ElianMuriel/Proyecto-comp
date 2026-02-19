@@ -100,6 +100,11 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:5173",
 ]
 
+# CAMBIO: Configuración de MongoDB (conectar a cinema_logs en lugar de vehiculos_db)
 # Mongo settings
 MONGO_URI = os.getenv("MONGO_URI", "mongodb://127.0.0.1:27017")
-MONGO_DB = os.getenv("MONGO_DB", "vehiculos_db")
+# CAMBIO: MONGO_DB ahora es cinema_logs para los eventos y catálogo de películas
+MONGO_DB = os.getenv("MONGO_DB", "cinema_logs")
+# CAMBIO: Agregamos usuario y contraseña para autenticación MongoDB (requerido en caso de cine)
+MONGO_USER = os.getenv("MONGO_USER", "mongo_backend_user")
+MONGO_PASSWORD = os.getenv("MONGO_PASSWORD", "exa_2026_ute")
