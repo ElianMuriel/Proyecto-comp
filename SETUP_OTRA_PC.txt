@@ -1,0 +1,391 @@
+================================================================================
+GUÍA DE CONFIGURACIÓN: CLONAR Y EJECUTAR PROYECTO EN OTRA PC
+================================================================================
+
+Este archivo contiene todos los comandos necesarios para clonar el repositorio
+de la rama feature/cine-adaptacion y configurar los tres proyectos (Backend, 
+Frontend React, React Native) en una nueva PC.
+
+REQUISITOS PREVIOS:
+═════════════════════════════════════════════════════════════════════════════
+
+Antes de empezar, asegúrate de tener instalado:
+
+1. Git: https://git-scm.com/download/win
+2. Python 3.8+: https://www.python.org/downloads/
+3. Node.js 16+: https://nodejs.org/
+4. PostgreSQL: https://www.postgresql.org/download/windows/
+5. MongoDB: https://www.mongodb.com/try/download/community
+6. Visual Studio Code (opcional): https://code.visualstudio.com/
+
+Verifica instalación con:
+  > python --version
+  > node --version
+  > npm --version
+  > psql --version
+  > mongosh --version
+
+
+================================================================================
+PASO 1: CLONAR EL REPOSITORIO
+================================================================================
+
+Opción A (Recomendar - Clonar rama directamente):
+─────────────────────────────────────────────────────────────────────────────
+
+git clone --branch feature/cine-adaptacion https://github.com/ElianMuriel/Proyecto-comp.git
+cd Proyecto-comp
+
+
+Opción B (Clonar todo y luego cambiar de rama):
+─────────────────────────────────────────────────────────────────────────────
+
+git clone https://github.com/ElianMuriel/Proyecto-comp.git
+cd Proyecto-comp
+git checkout feature/cine-adaptacion
+
+
+================================================================================
+PASO 2: CONFIGURAR POSTGRESQL
+================================================================================
+
+Abre PowerShell o CMD como Administrador:
+
+# Conectarse a PostgreSQL (necesitas la contraseña de postgres)
+psql -U postgres
+
+# Dentro del prompt de psql, ejecuta estos comandos:
+
+CREATE DATABASE cinema_db;
+
+CREATE USER backend_user WITH PASSWORD 'admin123';
+
+ALTER ROLE backend_user SET client_encoding TO 'utf8';
+
+ALTER ROLE backend_user SET default_transaction_isolation TO 'read committed';
+
+ALTER ROLE backend_user SET default_transaction_deferrable TO on;
+
+ALTER ROLE backend_user SET default_transaction_deferrable TO on;
+
+GRANT ALL PRIVILEGES ON DATABASE cinema_db TO backend_user;
+
+\c cinema_db
+
+GRANT ALL ON SCHEMA public TO backend_user;
+
+# Mostrar tablas (para verificar)
+\dt
+
+# Salir
+\q
+
+# Verificar conexión como backend_user:
+psql -U backend_user -d cinema_db
+
+
+================================================================================
+PASO 3: CONFIGURAR MONGODB
+================================================================================
+
+Abre una nueva terminal (PowerShell) y ejecuta:
+
+# Abrir mongosh (cliente interactivo de MongoDB)
+mongosh
+
+# Dentro de mongosh, ejecuta:
+
+# Cambiar a la base de datos cinema_logs
+use cinema_logs
+
+# Crear usuario
+db.createUser({
+  user: "mongo_backend_user",
+  pwd: "exa_2026_ute",
+  roles: [{ role: "readWrite", db: "cinema_logs" }]
+})
+
+# Crear índices para optimizar búsquedas
+db.reservation_events.createIndex({ reservation_id: 1 })
+
+db.reservation_events.createIndex({ created_at: 1 })
+
+db.movie_catalog.createIndex({ movie_title: 1 })
+
+# Verificar índices
+db.reservation_events.getIndexes()
+
+db.movie_catalog.getIndexes()
+
+# Salir
+exit
+
+
+================================================================================
+PASO 4: CONFIGURAR BACKEND DJANGO
+================================================================================
+
+Abre terminal en la carpeta raíz del proyecto: C:\ruta\a\Proyecto-comp
+
+# Entrar a la carpeta del backend
+cd vehiculos_api
+
+# Crear entorno virtual de Python
+python -m venv venv
+
+# Activar entorno virtual (en Windows PowerShell)
+.\venv\Scripts\Activate.ps1
+
+# Si estás en CMD:
+venv\Scripts\activate.bat
+
+# Verificar que está activado (deberías ver (venv) al inicio de la línea)
+
+# Instalar dependencias
+pip install --upgrade pip
+
+pip install -r requirements.txt
+
+# O si no existe requirements.txt, instalar manualmente:
+pip install Django==4.2
+pip install djangorestframework
+pip install psycopg2-binary
+pip install pymongo
+pip install python-dotenv
+pip install django-cors-headers
+pip install djangorestframework-simplejwt
+pip install django-filter
+
+# Verificar que el archivo .env existe y tiene las variables correctas
+# Deberías ver:
+#   DEBUG=1
+#   SECRET_KEY=dev-secret-key
+#   DB_NAME=cinema_db
+#   DB_USER=backend_user
+#   DB_PASSWORD=admin123
+#   DB_HOST=127.0.0.1
+#   DB_PORT=5432
+#   MONGO_URI=mongodb://127.0.0.1:27017
+#   MONGO_DB=cinema_logs
+#   MONGO_USER=mongo_backend_user
+#   MONGO_PASSWORD=exa_2026_ute
+#   CORS_ORIGIN=http://localhost:5173
+
+# Crear migraciones (detecta cambios en models.py)
+python manage.py makemigrations
+
+# Aplicar migraciones (crea tablas en PostgreSQL)
+python manage.py migrate
+
+# Crear superuser (usuario admin para Django Admin)
+python manage.py createsuperuser
+# Te pedirá:
+#   Username: admin
+#   Email: admin@example.com
+#   Password: (tu contraseña, ej: admin123)
+
+# Iniciar servidor Django
+python manage.py runserver
+
+# Deberías ver:
+# Starting development server at http://127.0.0.1:8000/
+# Quit the server with CTRL-BREAK.
+
+# Abre en navegador: http://localhost:8000/api/
+# Abre admin en: http://localhost:8000/admin/
+
+
+================================================================================
+PASO 5: CONFIGURAR FRONTEND REACT
+================================================================================
+
+En NUEVA terminal, entra a la carpeta raíz del proyecto:
+
+# Desde C:\ruta\a\Proyecto-comp
+cd vehiculos-ui
+
+# Instalar dependencias
+npm install
+
+# Iniciar servidor de desarrollo
+npm run dev
+
+# Deberías ver algo como:
+# VITE v4.x.x  ready in xxx ms
+# ➜  Local:   http://localhost:5173/
+
+# Abre en navegador: http://localhost:5173
+
+
+================================================================================
+PASO 6: CONFIGURAR REACT NATIVE
+================================================================================
+
+En OTRA nueva terminal, entra a la carpeta raíz del proyecto:
+
+# Desde C:\ruta\a\Proyecto-comp
+cd vehiculos-rn
+
+# Instalar dependencias
+npm install
+
+# Iniciar Expo
+npx expo start
+
+# Verás opciones:
+# Press 'i' to run iOS simulator (solo en Mac)
+# Press 'a' to run Android emulator
+# Press 'w' to run web
+# Press 'j' to open debugger
+# Press 'r' to reload app
+# Press 'm' to toggle menu
+
+# Para emulador Android:
+#   - Abre Android Studio
+#   - Abre el emulador
+#   - Presiona 'a' en la terminal
+
+# Para web:
+#   - Presiona 'w' en la terminal
+#   - Se abrirá en http://localhost:8081
+
+
+================================================================================
+CONFIGURACIÓN COMPLETADA: RESUMEN DE URLS
+================================================================================
+
+Después de completar los pasos anteriores, tendrás:
+
+Backend Django:
+  ✓ API: http://localhost:8000/api/
+  ✓ Admin: http://localhost:8000/admin/
+  ✓ Shows: http://localhost:8000/api/shows/
+  ✓ Reservations: http://localhost:8000/api/reservations/
+
+Frontend React:
+  ✓ Web: http://localhost:5173/
+  ✓ Admin Funciones: http://localhost:5173/admin/marcas
+  ✓ Admin Reservas: http://localhost:5173/admin/vehiculos
+
+React Native:
+  ✓ Expo: ejecutándose en emulador
+  ✓ Web: http://localhost:8081/ (si presionas 'w')
+
+
+================================================================================
+COMANDOS RÁPIDOS (Después de primer setup)
+================================================================================
+
+Si ya configuraste todo una vez, para ejecutar nuevamente:
+
+Terminal 1 - Backend:
+─────────────────────────────────────────────────────────────────────────────
+cd vehiculos_api
+.\venv\Scripts\Activate.ps1
+python manage.py runserver
+
+
+Terminal 2 - Frontend:
+─────────────────────────────────────────────────────────────────────────────
+cd vehiculos-ui
+npm run dev
+
+
+Terminal 3 - Mobile:
+─────────────────────────────────────────────────────────────────────────────
+cd vehiculos-rn
+npx expo start
+
+
+================================================================================
+TROUBLESHOOTING
+================================================================================
+
+Error: "pg_config executable not found"
+Solución:
+  pip install psycopg2-binary --force-reinstall --no-cache-dir
+
+
+Error: "ModuleNotFoundError: No module named 'django'"
+Solución:
+  .\venv\Scripts\Activate.ps1
+  pip install -r requirements.txt
+
+
+Error: "EADDRINUSE: address already in use :::8000"
+Solución:
+  Puerto 8000 ya está ocupado. Usa:
+  python manage.py runserver 8001
+
+
+Error: "Cannot find module 'react'"
+Solución:
+  cd vehiculos-ui
+  npm install
+
+
+Error: "MongoDB connection refused"
+Solución:
+  Verifica que MongoDB está corriendo
+  mongosh (si no conecta, MongoDB no está iniciado)
+  En Windows, inicia el servicio MongoDB
+
+
+Error: "Database does not exist: cinema_db"
+Solución:
+  Vuelve a crear la BD:
+  psql -U postgres
+  CREATE DATABASE cinema_db;
+  GRANT ALL PRIVILEGES ON DATABASE cinema_db TO backend_user;
+
+
+================================================================================
+NOTAS IMPORTANTES
+================================================================================
+
+1. PostgreSQL y MongoDB DEBEN estar corriendo antes de iniciar Django
+   - PostgreSQL: Generalmente inicia como servicio automáticamente
+   - MongoDB: Inicia con: mongod (o busca MongoDB en servicios de Windows)
+
+2. Los puertos deben estar libres:
+   - 8000 (Django)
+   - 5173 (React)
+   - 5432 (PostgreSQL)
+   - 27017 (MongoDB)
+
+3. Las credenciales en .env deben coincidir con las creadas en PostgreSQL/MongoDB
+
+4. Si cambias archivos, los servidores de desarrollo recargan automáticamente
+   (excepto cambios en models.py de Django, ahí necesitas restart)
+
+5. Para detener los servidores: Ctrl + C en cada terminal
+
+6. Las migraciones solo se corren una vez (primera vez que clones)
+   Después solo necesitas: python manage.py migrate (si hay migraciones nuevas)
+
+
+================================================================================
+PRÓXIMOS PASOS
+================================================================================
+
+Después de todo configurado:
+
+1. Crea datos de prueba en Django Admin: http://localhost:8000/admin/
+   - Crea funciones de cine (Shows)
+   - Crea reservas (Reservations)
+
+2. Prueba los endpoints con Postman o Thunder Client:
+   GET http://localhost:8000/api/shows/
+   POST http://localhost:8000/api/reservations/
+
+3. Prueba el frontend en http://localhost:5173/
+
+4. Prueba la app móvil en el emulador
+
+5. Si todo funciona, puedes hacer un pull request a main
+
+
+================================================================================
+Últimas actualizaciones: 19/02/2026
+Rama: feature/cine-adaptacion
+================================================================================
